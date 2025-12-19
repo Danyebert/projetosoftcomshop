@@ -53,9 +53,24 @@ class MovimentacaoRepository
 
     public function excluir($id)
     {
-        $model = $this->model->find($id);
-        $model->delete();
-        return true;
-    }
+        return DB::transaction(function () use ($id) {
+            $movimentacao = $this->model->findOrFail($id);
+            $produto = Produtos::findOrFail($movimentacao->produto_id);
+            if ($movimentacao->tipo_movimentacao === 'ENTRADA') {
+                if ($produto->estoque < $movimentacao->quantidade) {
+                    throw new \Exception(
+                        'Não é possível excluir esta entrada, pois o estoque atual é menor que a quantidade lançada.'
+                    );
+                }
+                $produto->estoque -= $movimentacao->quantidade;
+            } else {
+                $produto->estoque += $movimentacao->quantidade;
+            }
+            $produto->save();
 
+            $movimentacao->delete();
+
+            return true;
+        });
+    }
 }
