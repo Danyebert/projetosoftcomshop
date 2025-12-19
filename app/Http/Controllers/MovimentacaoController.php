@@ -41,13 +41,16 @@ class MovimentacaoController extends Controller
     }
     public function salvar(MovimentacaoRequest $request)
     {
-        $dados = $request->all();
-
-        $this->repository->salvar($request->all());
-        
-        Toastr::success("movimentacao cadastrado!", "Sucesso!");
-        return redirect()->to(url("/movimentacao"));
-
+        try {
+            $this->repository->salvar($request->all());
+            Toastr::success("Movimentação cadastrada com sucesso!", "Sucesso!");
+            return redirect()->to(url("/movimentacao"));
+        } catch (\Exception $e) {
+            Toastr::error($e->getMessage(), "Erro!");
+            return redirect()
+                ->back()
+                ->withInput();
+        }
 
     }
 
